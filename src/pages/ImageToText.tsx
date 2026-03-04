@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
-import { Image as ImageIcon, Upload, Download, Copy, RefreshCw, Settings2, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Upload, Download, Copy, RefreshCw, Settings2, Trash2, Crop, Instagram, MessageCircle, Twitter, Facebook, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 // ============================================
@@ -22,6 +22,15 @@ const ASCII_CHARS = {
   'Personalizado': '',
 };
 
+// Presets de redes sociais (largura em caracteres)
+const SOCIAL_PRESETS = {
+  'Instagram': { width: 55, label: 'Instagram (Posts/Stories)', icon: Instagram },
+  'WhatsApp': { width: 40, label: 'WhatsApp', icon: MessageCircle },
+  'Twitter': { width: 50, label: 'Twitter/X', icon: Twitter },
+  'Facebook': { width: 60, label: 'Facebook', icon: Facebook },
+  'Personalizado': { width: 80, label: 'Personalizado', icon: Settings2 },
+};
+
 export default function ImageToText() {
   const [image, setImage] = useState<string | null>(null);
   const [asciiArt, setAsciiArt] = useState<string>('');
@@ -36,7 +45,13 @@ export default function ImageToText() {
     color: false,
   });
   
+  // Crop state
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 100, height: 100 });
+  const [selectedPreset, setSelectedPreset] = useState<string>('Personalizado');
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,9 +66,48 @@ export default function ImageToText() {
     const reader = new FileReader();
     reader.onload = (event) => {
       setImage(event.target?.result as string);
+      // Reset crop area
+      setCropArea({ x: 0, y: 0, width: 100, height: 100 });
       toast.success('Imagem carregada!');
     };
     reader.readAsDataURL(file);
+  };
+  
+  const applyCrop = () => {
+    if (!image || !cropCanvasRef.current) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      const canvas = cropCanvasRef.current!;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const cropX = (cropArea.x / 100) * img.width;
+      const cropY = (cropArea.y / 100) * img.height;
+      const cropWidth = (cropArea.width / 100) * img.width;
+      const cropHeight = (cropArea.height / 100) * img.height;
+      
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
+      
+      ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+      
+      // Update image with cropped version
+      setImage(canvas.toDataURL());
+      setIsCropping(false);
+      setCropArea({ x: 0, y: 0, width: 100, height: 100 });
+      toast.success('Imagem recortada!');
+    };
+    img.src = image;
+  };
+  
+  const applySocialPreset = (presetName: string) => {
+    setSelectedPreset(presetName);
+    const preset = SOCIAL_PRESETS[presetName as keyof typeof SOCIAL_PRESETS];
+    if (preset) {
+      setSettings(s => ({ ...s, width: preset.width }));
+      toast.success(`Preset ${presetName} aplicado! Largura: ${preset.width} caracteres`);
+    }
   };
   
   const processImage = useCallback(() => {
@@ -113,7 +167,7 @@ export default function ImageToText() {
       toast.success('Arte ASCII gerada!');
     };
     img.src = image;
-  }, [image, settings]);
+  }, [image, settings, cropArea]);
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(asciiArt);
@@ -134,6 +188,8 @@ export default function ImageToText() {
   const clearImage = () => {
     setImage(null);
     setAsciiArt('');
+    setIsCropping(false);
+    setCropArea({ x: 0, y: 0, width: 100, height: 100 });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -147,7 +203,7 @@ export default function ImageToText() {
         </div>
         <h1 className="text-2xl md:text-3xl font-bold">Imagem → Arte de Texto</h1>
         <p className="text-muted-foreground max-w-lg mx-auto">
-          Converta suas imagens em arte ASCII. Envie uma imagem e ajuste as configurações para obter o melhor resultado.
+          Converta suas imagens em arte ASCII. Escolha presets para redes sociais!
         </p>
       </div>
 
@@ -190,6 +246,68 @@ export default function ImageToText() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+                
+                {/* Crop controls */}
+                {isCropping && (
+                  <div className="p-4 bg-amber-50 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-amber-800">Ajuste a área de recorte (%)</p>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Posição X: {cropArea.x}%</Label>
+                      <Slider
+                        value={[cropArea.x]}
+                        onValueChange={([v]) => setCropArea(c => ({ ...c, x: v }))}
+                        min={0}
+                        max={100 - cropArea.width}
+                        step={1}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Posição Y: {cropArea.y}%</Label>
+                      <Slider
+                        value={[cropArea.y]}
+                        onValueChange={([v]) => setCropArea(c => ({ ...c, y: v }))}
+                        min={0}
+                        max={100 - cropArea.height}
+                        step={1}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Largura: {cropArea.width}%</Label>
+                      <Slider
+                        value={[cropArea.width]}
+                        onValueChange={([v]) => setCropArea(c => ({ ...c, width: Math.min(v, 100 - cropArea.x) }))}
+                        min={10}
+                        max={100}
+                        step={1}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Altura: {cropArea.height}%</Label>
+                      <Slider
+                        value={[cropArea.height]}
+                        onValueChange={([v]) => setCropArea(c => ({ ...c, height: Math.min(v, 100 - cropArea.y) }))}
+                        min={10}
+                        max={100}
+                        step={1}
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setIsCropping(false)} className="flex-1">
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={applyCrop} className="flex-1 bg-amber-600 hover:bg-amber-700">
+                        <Check className="h-4 w-4 mr-1" />
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -215,6 +333,47 @@ export default function ImageToText() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Presets de redes sociais */}
+            <div className="space-y-2">
+              <Label>Rede Social (Preset)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(SOCIAL_PRESETS).map(([key, preset]) => {
+                  const Icon = preset.icon;
+                  return (
+                    <Button
+                      key={key}
+                      variant={selectedPreset === key ? 'default' : 'outline'}
+                      size="sm"
+                      className={selectedPreset === key ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                      onClick={() => applySocialPreset(key)}
+                    >
+                      <Icon className="h-4 w-4 mr-1" />
+                      {key}
+                    </Button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cada rede social tem uma largura ideal para o texto caber perfeitamente!
+              </p>
+            </div>
+            
+            {/* Recortar */}
+            {image && (
+              <div className="space-y-2">
+                <Label>Recorte</Label>
+                <Button
+                  variant={isCropping ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsCropping(!isCropping)}
+                  className={isCropping ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                >
+                  <Crop className="h-4 w-4 mr-1" />
+                  {isCropping ? 'Cancelar Recorte' : 'Recortar Imagem'}
+                </Button>
+              </div>
+            )}
+            
             {/* Largura */}
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -352,12 +511,22 @@ export default function ImageToText() {
                 {asciiArt}
               </pre>
             </div>
+            
+            {/* Info sobre a rede social */}
+            <div className="mt-4 p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Dica:</strong> Este texto foi otimizado para <Badge variant="secondary">{selectedPreset}</Badge> com largura de <Badge variant="secondary">{settings.width}</Badge> caracteres.
+                Copie e cole diretamente na {selectedPreset === 'Personalizado' ? 'sua aplicação' : selectedPreset}!
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Canvas oculto para processamento */}
       <canvas ref={canvasRef} className="hidden" />
+      {/* Canvas oculto para recorte */}
+      <canvas ref={cropCanvasRef} className="hidden" />
     </div>
   );
 }

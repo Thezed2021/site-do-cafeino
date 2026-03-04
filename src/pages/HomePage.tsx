@@ -1,4 +1,4 @@
-import { Coffee, Info } from 'lucide-react';
+import { Coffee, Info, BookOpen, Image as ImageIcon, User, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -193,6 +193,109 @@ export default function HomePage() {
             <PostCard key={post.id} post={post} />
           ))}
         </div>
+      </div>
+
+      {/* Tutorial Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Como Personalizar
+          </span>
+          <div className="h-px flex-1 bg-border/50" />
+        </div>
+        
+        <Card className="border-blue-200/60 bg-blue-50/50">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">Tutorial: Como Adicionar Imagens</h3>
+            </div>
+            
+            <div className="space-y-4 text-sm text-blue-800">
+              {/* Imagem Principal */}
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  1. Trocar a Imagem Principal (Degradê)
+                </h4>
+                <p className="text-blue-700/80 ml-6">
+                  No arquivo <code className="bg-blue-100 px-1 rounded">src/pages/HomePage.tsx</code>, procure pela seção 
+                  <strong> "Gradient Image Placeholder"</strong> e substitua:
+                </p>
+                <pre className="bg-blue-100 p-3 rounded-lg text-xs overflow-x-auto ml-6">
+{`{/* Imagem Principal */}
+<div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden">
+  <img 
+    src="/sua-imagem.jpg" 
+    alt="Descrição" 
+    className="w-full h-full object-cover"
+  />
+</div>`}
+                </pre>
+                <p className="text-blue-700/80 ml-6">
+                  Coloque sua imagem na pasta <code className="bg-blue-100 px-1 rounded">public/</code> e referencie como <code className="bg-blue-100 px-1 rounded">/sua-imagem.jpg</code>
+                </p>
+              </div>
+              
+              {/* Avatar do Autor */}
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  2. Adicionar Foto de Perfil do Autor
+                </h4>
+                <p className="text-blue-700/80 ml-6">
+                  Para usar uma imagem real ao invés das iniciais, modifique o componente PostCard:
+                </p>
+                <pre className="bg-blue-100 p-3 rounded-lg text-xs overflow-x-auto ml-6">
+{`<Avatar className="h-10 w-10">
+  <AvatarImage src="/foto-autor.jpg" alt="Nome" />
+  <AvatarFallback>CF</AvatarFallback>
+</Avatar>`}
+                </pre>
+              </div>
+              
+              {/* Imagens nas Postagens */}
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  3. Adicionar Imagens nas Postagens
+                </h4>
+                <p className="text-blue-700/80 ml-6">
+                  Ao criar uma nova postagem, adicione a propriedade <code className="bg-blue-100 px-1 rounded">image</code>:
+                </p>
+                <pre className="bg-blue-100 p-3 rounded-lg text-xs overflow-x-auto ml-6">
+{`{
+  id: 'post-003',
+  author: {
+    name: 'Seu Nome',
+    avatar: 'SN',
+  },
+  date: '05/03/2026',
+  content: 'Texto da postagem...',
+  image: '/minha-foto.jpg',  // ← Adicione esta linha
+  tags: ['foto', 'memória'],
+}`}
+                </pre>
+              </div>
+              
+              {/* Passo a Passo */}
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Passo a Passo Completo
+                </h4>
+                <ol className="list-decimal list-inside space-y-1 text-blue-700/80 ml-6">
+                  <li>Coloque suas imagens na pasta <code className="bg-blue-100 px-1 rounded">public/</code> do projeto</li>
+                  <li>Os formatos suportados são: <strong>JPG, PNG, GIF, WEBP</strong></li>
+                  <li>Referencie as imagens usando <code className="bg-blue-100 px-1 rounded">/nome-da-imagem.extensao</code></li>
+                  <li>Recomendado: use imagens otimizadas (máximo 1MB cada)</li>
+                  <li>Após fazer as alterações, faça o build e deploy novamente</li>
+                </ol>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Footer */}

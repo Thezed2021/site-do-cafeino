@@ -8,9 +8,12 @@ import {
   Ticket, 
   CircleDot, 
   Home,
-  Menu
+  Menu,
+  Sun,
+  Moon,
+  Smile
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -23,6 +26,7 @@ import VideoToGif from '@/pages/VideoToGif';
 import ImageEditor from '@/pages/ImageEditor';
 import Sorteio from '@/pages/Sorteio';
 import CaraOuCoroa from '@/pages/CaraOuCoroa';
+import EmojiToImage from '@/pages/EmojiToImage';
 
 const menuItems = [
   { path: '/', label: 'Início', icon: Home },
@@ -30,9 +34,55 @@ const menuItems = [
   { path: '/image-to-text', label: 'Imagem → Texto', icon: Image },
   { path: '/video-to-gif', label: 'Vídeo → GIF', icon: Video },
   { path: '/image-editor', label: 'Editor de Imagens', icon: Paintbrush },
+  { path: '/emoji-to-image', label: 'Emoji → Imagem', icon: Smile },
   { path: '/sorteio', label: 'Sorteio', icon: Ticket },
   { path: '/cara-ou-coroa', label: 'Cara ou Coroa', icon: CircleDot },
 ];
+
+// Theme toggle component
+function ThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+  
+  useEffect(() => {
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+  
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      className="rounded-full"
+      title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+    >
+      {isDark ? (
+        <Sun className="h-5 w-5 text-amber-500" />
+      ) : (
+        <Moon className="h-5 w-5 text-slate-600" />
+      )}
+    </Button>
+  );
+}
 
 function SidebarContent() {
   const location = useLocation();
@@ -72,7 +122,10 @@ function SidebarContent() {
         </nav>
       </ScrollArea>
       
-      <div className="p-4 border-t border-border/50">
+      <div className="p-4 border-t border-border/50 space-y-3">
+        <div className="flex items-center justify-center">
+          <ThemeToggle />
+        </div>
         <p className="text-xs text-muted-foreground text-center">
           Todas as ferramentas rodam no seu navegador
         </p>
@@ -120,7 +173,7 @@ function AppContent() {
             <Coffee className="h-5 w-5 text-amber-600" />
             <span className="font-bold">Site do Cafeíno</span>
           </Link>
-          <div className="w-9" />
+          <ThemeToggle />
         </div>
       </header>
       
@@ -135,6 +188,7 @@ function AppContent() {
             <Route path="/image-editor" element={<ImageEditor />} />
             <Route path="/sorteio" element={<Sorteio />} />
             <Route path="/cara-ou-coroa" element={<CaraOuCoroa />} />
+            <Route path="/emoji-to-image" element={<EmojiToImage />} />
           </Routes>
         </div>
       </main>
